@@ -55,8 +55,9 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import ExtraTreesRegressor
 # %% codecell
-url ='SouthKoreacoronavirusdataset/PatientInfo.csv'
-df = pd.read_csv(url)
+cd_data = 'data/'
+url ='PatientInfo.csv'
+df = pd.read_csv(cd_data + url)
 df.head()
 # %% codecell
 df.shape
@@ -71,31 +72,37 @@ df.state.value_counts()
 # %% markdown
 #  **<font color='teal'> Create a new column named 'n_age' which is the calculated age based on the birth year column.</font>**
 # %% codecell
-
+import datetime
+year = datetime.date.today().year
+df['n_age'] = year - df['birth_year']
 # %% markdown
 # ### Handle Missing Values
 # %% markdown
 #  **<font color='teal'> Print the number of missing values by column.</font>**
 # %% codecell
-
+print(df.isnull().sum())
 # %% codecell
 df.info()
 # %% markdown
 #  **<font color='teal'> Fill the 'disease' missing values with 0 and remap the True values to 1.</font>**
 # %% codecell
-
+df['disease'].fillna(0, inplace=True)
+df[df['disease'] != 0]['disease'].replace(1, inplace=True)
 # %% markdown
 #  **<font color='teal'> Fill null values in the following columns with their mean: 'global_number','birth_year','infection_order','infected_by'and 'contact_number'</font>**
 # %% codecell
-
+fillna_mean_features = ['global_num','birth_year','infection_order','infected_by','contact_number', 'n_age']
+for feature in fillna_mean_features:
+    df[feature].fillna(df[feature].mean(), inplace=True)
 # %% markdown
 #  **<font color='teal'> Fill the rest of the missing values with any method.</font>**
 # %% codecell
+df.fillna(0, inplace=True)
 
 # %% markdown
 #  **<font color='teal'> Check for any remaining null values.</font>**
 # %% codecell
-
+df.isnull().sum()
 # %% codecell
 df.head()
 # %% markdown
@@ -133,15 +140,37 @@ vn
 # %% markdown
 # **<font color='teal'> Plot the correlation heat map for the features.</font>**
 # %% codecell
-
+sns.heatmap(df.corr())
+plt.title('Heatmap')
+plt.savefig('figures/heatmap.png')
 # %% markdown
 # **<font color='teal'> Plot the boxplots to check for outliers. </font>**
 # %% codecell
+df_box = df.drop(['patient_id', 'infected_by'], axis=1)
+df_box.boxplot()
+plt.xticks(rotation=45)
+plt.xlabel('Features')
+plt.title('Boxplot')
+
+
+
 
 # %% markdown
 # **<font color='teal'> Create dummy features for object type features. </font>**
 # %% codecell
+columns = ['patient_id', 'global_num', 'sex', 'birth_year', 'age', 'country',
+       'province', 'city','infection_case', 'infection_order',
+       'infected_by', 'contact_number', 'disease', 'n_age']
+X = pd.get_dummies(df[columns])
 
+
+features = ['released', 'isolated', 'deceased']
+idx = 1
+for feature in features:
+    df['state'].replace(feature, idx, inplace=True)
+    idx += 1
+y = df['state']
+df['state'].unique()
 # %% markdown
 # ### Split the data into test and train subsamples
 # %% codecell
